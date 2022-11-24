@@ -19,6 +19,7 @@
     <HBox fx:id="messagePanel" visible="false" managed="false">
         <TextField fx:id="textField" promptText="Enter something..." HBox.hgrow="ALWAYS" onAction="#onSendEnter"/>
         <Button text="Send" minWidth="50" onAction="#onSendButtonClick"/>
+        <Button text="Change Nick" minWidth="50" onAction="#onShowChangeNickButtonClick"/>
     </HBox>
 
 </VBox>

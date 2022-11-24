@@ -28,10 +28,13 @@ public class MainController implements Initializable {
     private static final String KEY_AUTH_OK = "/auth_ok ";
     private static final String KEY_AUTH = "/auth";
     private static final String KEY_REG = "/reg";
+    private static final String KEY_CHANGE_NICK = "/change";
     private static final String WINDOW_TITLE = "Chat";
     private static final String KEY_CLIENTS = "/clients ";
-    private static final String KEY_RESULT_OK = "/result ok";
-    private static final String KEY_RESULT_FAILED = "/result failed";
+    private static final String KEY_REGISTRATION_RESULT_OK = "/registration result ok";
+    private static final String KEY_REGISTRATION_RESULT_FAILED = "/registration result failed";
+    private static final String KEY_CHANGE_NICK_RESULT_OK = "/change nick result ok";
+    private static final String KEY_CHANGE_NICK_RESULT_FAILED = "/change nick result failed";
     @FXML
     private TextField loginField;
     @FXML
@@ -53,7 +56,9 @@ public class MainController implements Initializable {
     private final String SERVER_ADDRESS = "localhost";
     private Stage stage;
     private Stage regStage;
+    private Stage changeNickStage;
     private RegController regController;
+    private ChangeNickController changeNickController;
 
     private boolean isAuthenticated;
     private boolean isTimeout;
@@ -94,7 +99,6 @@ public class MainController implements Initializable {
             });
         });
         setAuthenticated(false);
-        regStage = createRegWindow();
     }
 
     private void connect() {
@@ -116,9 +120,9 @@ public class MainController implements Initializable {
                             break;
                         }
 
-                        if (strInClient.equals(KEY_RESULT_OK)) {
+                        if (strInClient.equals(KEY_REGISTRATION_RESULT_OK)) {
                             regController.addTextToTextArea("Registration successful");
-                        } else if (strInClient.equals(KEY_RESULT_FAILED)) {
+                        } else if (strInClient.equals(KEY_REGISTRATION_RESULT_FAILED)) {
                             regController.addTextToTextArea("Registration failed. Possibly nick or login not free");
                         } else {
                             textArea.appendText(strInClient + "\n");
@@ -138,6 +142,10 @@ public class MainController implements Initializable {
                                         clientList.getItems().add(token[i]);
                                     }
                                 });
+                            } else if (strInClient.equals(KEY_CHANGE_NICK_RESULT_OK)) {
+                                changeNickController.addTextToTextArea("Change nick successful");
+                            } else if (strInClient.equals(KEY_CHANGE_NICK_RESULT_FAILED)) {
+                                changeNickController.addTextToTextArea("Change nick failed. Nick not free");
                             } else {
                                 textArea.appendText(strInClient + "\n");
                             }
@@ -235,7 +243,7 @@ public class MainController implements Initializable {
 
     private void setTitle(String nick) {
         Platform.runLater(() -> {
-            stage.setTitle(WINDOW_TITLE + " : " + nick);
+            stage.setTitle(String.format("%s : %s",WINDOW_TITLE, nick));
         });
     }
 
@@ -280,6 +288,44 @@ public class MainController implements Initializable {
 
     @FXML
     public void onShowRegWindowButtonClick(ActionEvent actionEvent) {
+        regStage = createRegWindow();
         regStage.show();
+    }
+
+    private Stage createChangeNickWindow() {
+        final int WIDTH = 230;
+        final int HEIGHT = 150;
+        final String REG_WINDOW_TITLE = "Change nick form";
+        Stage stage = new Stage();
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/change_nick_view.fxml"));
+            Scene scene = new Scene(fxmlLoader.load(), WIDTH, HEIGHT);
+
+            stage.setTitle(REG_WINDOW_TITLE);
+            stage.setScene(scene);
+            stage.initModality(Modality.APPLICATION_MODAL);
+
+            changeNickController = fxmlLoader.getController();
+            changeNickController.setController(this);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return stage;
+    }
+
+
+    public void tryToChangeNick(String nick) {
+        try {
+            outClient.writeUTF(String.format("%s %s", KEY_CHANGE_NICK, nick));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        setTitle(nick);
+    }
+
+    @FXML
+    public void onShowChangeNickButtonClick(ActionEvent actionEvent) {
+        changeNickStage = createChangeNickWindow();
+        changeNickStage.show();
     }
 }

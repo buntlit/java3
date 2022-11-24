@@ -16,12 +16,12 @@ public class Server {
 
     public Server() {
         clients = new Vector<>();
-        authenticationService = new SimpleAuthenticationService();
         ServerSocket server = null;
         Socket socket;
         try {
             server = new ServerSocket(PORT);
             System.out.println("Server started");
+            authenticationService = new SimpleAuthenticationService();
             while (true) {
                 socket = server.accept();
                 System.out.println("Remote Socket Address: " + socket.getRemoteSocketAddress());
@@ -31,6 +31,7 @@ public class Server {
             e.printStackTrace();
         } finally {
             try {
+                authenticationService.disconnectData();
                 server.close();
 
             } catch (IOException e) {
@@ -82,5 +83,8 @@ public class Server {
         broadcastClients(key);
     }
 
+    public void update(String key){
+        broadcastClients(key);
+    }
 
 }
