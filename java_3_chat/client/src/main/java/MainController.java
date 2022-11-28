@@ -16,9 +16,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -35,6 +33,7 @@ public class MainController implements Initializable {
     private static final String KEY_REGISTRATION_RESULT_FAILED = "/registration result failed";
     private static final String KEY_CHANGE_NICK_RESULT_OK = "/change nick result ok";
     private static final String KEY_CHANGE_NICK_RESULT_FAILED = "/change nick result failed";
+    private static final String PATH = "history/%s.txt";
     @FXML
     private TextField loginField;
     @FXML
@@ -52,6 +51,9 @@ public class MainController implements Initializable {
     private Socket socket;
     private DataInputStream inClient;
     private DataOutputStream outClient;
+    private BufferedReader fileReader;
+    private BufferedWriter fileWriter;
+    private File txtFile;
     private final int PORT = 8189;
     private final String SERVER_ADDRESS = "localhost";
     private Stage stage;
@@ -63,6 +65,7 @@ public class MainController implements Initializable {
     private boolean isAuthenticated;
     private boolean isTimeout;
     private String nick;
+    private String history;
 
     public void setAuthenticated(boolean isAuthenticated) {
         this.isAuthenticated = isAuthenticated;
@@ -129,6 +132,31 @@ public class MainController implements Initializable {
                         }
                     }
                     if (!isTimeout) {
+
+                        String nameTxt = String.format(PATH, nick);
+                        txtFile = new File(nameTxt);
+                        StringBuilder stringBuilder = new StringBuilder();
+                        if (txtFile.exists()) {
+                            String str;
+                            fileReader = new BufferedReader(new FileReader(nameTxt));
+                            while ((str = fileReader.readLine()) != null) {
+                                stringBuilder.append(str + "\n");
+                            }
+                        } else {
+                            txtFile.createNewFile();
+                            fileReader = new BufferedReader(new FileReader(nameTxt));
+                        }
+                        fileWriter = new BufferedWriter(new FileWriter(nameTxt));
+                        String[] historyToken = stringBuilder.toString().split("\n");
+                        history = stringBuilder.toString();
+                        if (historyToken.length < 100) {
+                            textArea.appendText(history);
+                        } else {
+                            for (int i = historyToken.length - 100; i < historyToken.length; i++) {
+                                textArea.appendText(historyToken[i] + "\n");
+                            }
+                        }
+
                         while (true) {
                             String strInClient = inClient.readUTF();
                             if (strInClient.equals(KEY_END)) {
@@ -148,8 +176,10 @@ public class MainController implements Initializable {
                                 changeNickController.addTextToTextArea("Change nick failed. Nick not free");
                             } else {
                                 textArea.appendText(strInClient + "\n");
+                                history += (strInClient + "\n");
                             }
                         }
+                        fileWriter.write(history);
                     }
                 } catch (RuntimeException e) {
                     try {
@@ -161,6 +191,8 @@ public class MainController implements Initializable {
                     e.printStackTrace();
                 } finally {
                     try {
+                        fileReader.close();
+                        fileWriter.close();
                         inClient.close();
                         outClient.close();
                     } catch (IOException e) {
@@ -243,7 +275,7 @@ public class MainController implements Initializable {
 
     private void setTitle(String nick) {
         Platform.runLater(() -> {
-            stage.setTitle(String.format("%s : %s",WINDOW_TITLE, nick));
+            stage.setTitle(String.format("%s : %s", WINDOW_TITLE, nick));
         });
     }
 

@@ -49,7 +49,7 @@ public class ClientHandler {
                                     String[] subStrings = server.getAuthenticationService().
                                             getNickAndHistoryByLoginAndPassword(token[1], token[2]).split("\\s", 2);
                                     newNick = subStrings[0];
-                                    history = subStrings[1];
+//                                    history = subStrings[1];
                                 } catch (SQLException e) {
                                     e.printStackTrace();
                                 }
@@ -87,9 +87,9 @@ public class ClientHandler {
 
                     }
                     socket.setSoTimeout(0);
-                    if (!history.equals("")) {
-                        outSocket.writeUTF(history);
-                    }
+//                    if (!history.equals("")) {
+//                        outSocket.writeUTF(history);
+//                    }
                     while (true) {
                         String strInSocket = inSocket.readUTF();
                         if (strInSocket.equals(KEY_END)) {
@@ -129,14 +129,14 @@ public class ClientHandler {
                     e.printStackTrace();
                 } finally {
                     System.out.printf("Client %s disconnected\n", nick);
-                    try {
-                        if (history.endsWith("\n")) {
-                            history = history.substring(0, history.length() - 1);
-                        }
-                        server.getAuthenticationService().historizeMessageList(nick, history);
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+//                    try {
+//                        if (history.endsWith("\n")) {
+//                            history = history.substring(0, history.length() - 1);
+//                        }
+//                        server.getAuthenticationService().historizeMessageList(nick, history);
+//                    } catch (SQLException e) {
+//                        e.printStackTrace();
+//                    }
                     server.unsubscribe(this, KEY_CLIENTS);
                     try {
                         inSocket.close();
