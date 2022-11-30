@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.sql.SQLException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ClientHandler {
     private static final String KEY = "/";
@@ -21,6 +23,7 @@ public class ClientHandler {
 
     Server server;
     Socket socket;
+    ExecutorService service;
     DataInputStream inSocket;
     DataOutputStream outSocket;
     private String nick;
@@ -35,7 +38,8 @@ public class ClientHandler {
             inSocket = new DataInputStream(socket.getInputStream());
             outSocket = new DataOutputStream(socket.getOutputStream());
 
-            new Thread(() -> {
+            service = Executors.newCachedThreadPool();
+            service.execute(()->{
                 try {
 
                     while (true) {
@@ -104,7 +108,6 @@ public class ClientHandler {
                             String message = String.format("%s from %s: %s", subString1, nick, subString2);
                             server.whisperMessage(message, nickTo, nick);
                         } else if (strInSocket.startsWith(KEY_CHANGE_NICK)) {
-                            System.out.println(strInSocket);
                             String[] token = strInSocket.split("\\s", 2);
                             String newNick = token[1];
                             try {
@@ -150,11 +153,11 @@ public class ClientHandler {
                         }
                     }
                 }
-            }).start();
+            });
+            service.shutdown();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     public String getNick() {

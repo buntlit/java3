@@ -58,7 +58,7 @@ public class Server {
     public void broadcastClients(String message) {
         for (ClientHandler client : clients) {
             message = message.concat(client.getNick()) + " ";
-           }
+        }
         for (ClientHandler client : clients) {
             client.sendMessage(message);
         }
@@ -83,7 +83,7 @@ public class Server {
         broadcastClients(key);
     }
 
-    public void update(String key){
+    public void update(String key) {
         broadcastClients(key);
     }
 

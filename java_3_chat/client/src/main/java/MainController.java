@@ -65,7 +65,8 @@ public class MainController implements Initializable {
     private boolean isAuthenticated;
     private boolean isTimeout;
     private String nick;
-    private String history;
+    private String history = "";
+    private String nameTxt;
 
     public void setAuthenticated(boolean isAuthenticated) {
         this.isAuthenticated = isAuthenticated;
@@ -133,7 +134,7 @@ public class MainController implements Initializable {
                     }
                     if (!isTimeout) {
 
-                        String nameTxt = String.format(PATH, nick);
+                        nameTxt = String.format(PATH, nick);
                         txtFile = new File(nameTxt);
                         StringBuilder stringBuilder = new StringBuilder();
                         if (txtFile.exists()) {
@@ -142,19 +143,17 @@ public class MainController implements Initializable {
                             while ((str = fileReader.readLine()) != null) {
                                 stringBuilder.append(str + "\n");
                             }
-                        } else {
-                            txtFile.createNewFile();
-                            fileReader = new BufferedReader(new FileReader(nameTxt));
-                        }
-                        fileWriter = new BufferedWriter(new FileWriter(nameTxt));
-                        String[] historyToken = stringBuilder.toString().split("\n");
-                        history = stringBuilder.toString();
-                        if (historyToken.length < 100) {
-                            textArea.appendText(history);
-                        } else {
-                            for (int i = historyToken.length - 100; i < historyToken.length; i++) {
-                                textArea.appendText(historyToken[i] + "\n");
+                            String[] historyToken = stringBuilder.toString().split("\n");
+                            history = stringBuilder.toString();
+                            if (historyToken.length < 100) {
+                                textArea.appendText(history);
+                            } else {
+                                for (int i = historyToken.length - 100; i < historyToken.length; i++) {
+                                    textArea.appendText(historyToken[i] + "\n");
+                                }
                             }
+                            txtFile.deleteOnExit();
+                            fileReader.close();
                         }
 
                         while (true) {
@@ -172,6 +171,7 @@ public class MainController implements Initializable {
                                 });
                             } else if (strInClient.equals(KEY_CHANGE_NICK_RESULT_OK)) {
                                 changeNickController.addTextToTextArea("Change nick successful");
+                                nameTxt = String.format(PATH, nick);
                             } else if (strInClient.equals(KEY_CHANGE_NICK_RESULT_FAILED)) {
                                 changeNickController.addTextToTextArea("Change nick failed. Nick not free");
                             } else {
@@ -179,7 +179,7 @@ public class MainController implements Initializable {
                                 history += (strInClient + "\n");
                             }
                         }
-                        fileWriter.write(history);
+
                     }
                 } catch (RuntimeException e) {
                     try {
@@ -191,7 +191,8 @@ public class MainController implements Initializable {
                     e.printStackTrace();
                 } finally {
                     try {
-                        fileReader.close();
+                        fileWriter = new BufferedWriter(new FileWriter(nameTxt));
+                        fileWriter.write(history);
                         fileWriter.close();
                         inClient.close();
                         outClient.close();
@@ -352,6 +353,7 @@ public class MainController implements Initializable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        this.nick = nick;
         setTitle(nick);
     }
 
