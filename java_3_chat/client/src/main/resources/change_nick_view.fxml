@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="ChangeNickController" alignment="CENTER">
+
+    <Label text="Enter new nick"/>
+    <TextField fx:id="nickField" promptText="Nickname" HBox.hgrow="ALWAYS" onAction="#onChangeNickEnter"/>
+    <TextArea fx:id="textArea" VBox.vgrow="ALWAYS" editable="false"/>
+    <HBox>
+        <Button text="Change nick" minWidth="80" onAction="#onChangeNickButtonClick"/>
+        <Button text="Cancel" minWidth="80" onAction="#onCancelButtonClick"/>
+    </HBox>
+</VBox>
