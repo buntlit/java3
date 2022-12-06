@@ -34,6 +34,7 @@ public class MainController implements Initializable {
     private static final String KEY_CHANGE_NICK_RESULT_OK = "/change nick result ok";
     private static final String KEY_CHANGE_NICK_RESULT_FAILED = "/change nick result failed";
     private static final String PATH = "history/%s.txt";
+    private static final int MAX_LAST_MESSAGES = 100;
     @FXML
     private TextField loginField;
     @FXML
@@ -125,9 +126,9 @@ public class MainController implements Initializable {
                         }
 
                         if (strInClient.equals(KEY_REGISTRATION_RESULT_OK)) {
-                            regController.addTextToTextArea("Registration successful");
+                            regController.addTextToTextArea("Registration successful\n");
                         } else if (strInClient.equals(KEY_REGISTRATION_RESULT_FAILED)) {
-                            regController.addTextToTextArea("Registration failed. Possibly nick or login not free");
+                            regController.addTextToTextArea("Registration failed. Possibly nick or login not free\n");
                         } else {
                             textArea.appendText(strInClient + "\n");
                         }
@@ -145,10 +146,10 @@ public class MainController implements Initializable {
                             }
                             String[] historyToken = stringBuilder.toString().split("\n");
                             history = stringBuilder.toString();
-                            if (historyToken.length < 100) {
+                            if (historyToken.length < MAX_LAST_MESSAGES) {
                                 textArea.appendText(history);
                             } else {
-                                for (int i = historyToken.length - 100; i < historyToken.length; i++) {
+                                for (int i = historyToken.length - MAX_LAST_MESSAGES; i < historyToken.length; i++) {
                                     textArea.appendText(historyToken[i] + "\n");
                                 }
                             }
@@ -170,10 +171,10 @@ public class MainController implements Initializable {
                                     }
                                 });
                             } else if (strInClient.equals(KEY_CHANGE_NICK_RESULT_OK)) {
-                                changeNickController.addTextToTextArea("Change nick successful");
+                                changeNickController.addTextToTextArea("Change nick successful\n");
                                 nameTxt = String.format(PATH, nick);
                             } else if (strInClient.equals(KEY_CHANGE_NICK_RESULT_FAILED)) {
-                                changeNickController.addTextToTextArea("Change nick failed. Nick not free");
+                                changeNickController.addTextToTextArea("Change nick failed. Nick not free\n");
                             } else {
                                 textArea.appendText(strInClient + "\n");
                                 history += (strInClient + "\n");

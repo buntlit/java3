@@ -4,8 +4,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.sql.SQLException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.logging.Logger;
 
 public class ClientHandler {
     private static final String KEY = "/";
@@ -23,32 +22,33 @@ public class ClientHandler {
 
     Server server;
     Socket socket;
-    ExecutorService service;
     DataInputStream inSocket;
     DataOutputStream outSocket;
     private String nick;
     private String history;
 
     private String login;
+    private Logger logger;
 
     public ClientHandler(Server server, Socket socket) {
         try {
             this.server = server;
             this.socket = socket;
+            logger = server.getLogger();
             inSocket = new DataInputStream(socket.getInputStream());
             outSocket = new DataOutputStream(socket.getOutputStream());
 
-            service = Executors.newCachedThreadPool();
-            service.execute(()->{
+            server.getExecutorService().execute(()->{
                 try {
 
                     while (true) {
-                        socket.setSoTimeout(5000);
+                        socket.setSoTimeout(120000);
                         String strInSocket = inSocket.readUTF();
                         if (strInSocket.startsWith(KEY_AUTH)) {
                             String[] token = strInSocket.split("\\s");
                             if (token.length > 2) {
                                 String newNick = null;
+                                logger.fine(String.format("Try to log in with login: \"%s\" and password: \"%s\"", token[1], token[2]));
                                 try {
                                     String[] subStrings = server.getAuthenticationService().
                                             getNickAndHistoryByLoginAndPassword(token[1], token[2]).split("\\s", 2);
@@ -57,19 +57,22 @@ public class ClientHandler {
                                 } catch (SQLException e) {
                                     e.printStackTrace();
                                 }
-                                if (newNick != null) {
+                                if (!newNick.equals("null")) {
                                     nick = newNick;
                                     login = token[1];
                                     if (!server.isAuthorized(login)) {
                                         sendMessage(String.format("%s%s", KEY_AUTH_OK, nick));
+                                        logger.fine("Authentication successful");
                                         server.subscribe(this, KEY_CLIENTS);
-                                        System.out.printf("Client %s connected\n", nick);
+                                        logger.info(String.format("Client \"%s\" connected", nick));
                                         break;
                                     } else {
                                         sendMessage("User already connected");
+                                        logger.fine("Authentication failed. User already connected");
                                     }
                                 } else {
                                     sendMessage("Incorrect login/password");
+                                    logger.fine("Authentication failed. Incorrect login/password");
                                 }
                             }
                         } else if (strInSocket.startsWith(KEY_REG)) {
@@ -77,10 +80,13 @@ public class ClientHandler {
                             String regLogin = token[1];
                             String regPassword = token[2];
                             String regNick = token[3];
+                            logger.fine(String.format("Try to register with login: \"%s\", password: \"%s\" and nick: \"%s\"", regLogin, regPassword, regNick));
                             try {
                                 if (server.getAuthenticationService().registration(regLogin, regPassword, regNick)) {
+                                    logger.fine("Registration successful");
                                     sendMessage(KEY_REGISTRATION_RESULT_OK);
                                 } else {
+                                    logger.fine("Registration failed");
                                     sendMessage(KEY_REGISTRATION_RESULT_FAILED);
                                 }
                             } catch (SQLException e) {
@@ -110,14 +116,18 @@ public class ClientHandler {
                         } else if (strInSocket.startsWith(KEY_CHANGE_NICK)) {
                             String[] token = strInSocket.split("\\s", 2);
                             String newNick = token[1];
+                            logger.fine(String.format("\"%s\" trying to change nickname to \"%s\"", nick, newNick));
                             try {
                                 if (server.getAuthenticationService().changeNick(nick, newNick)) {
                                     sendMessage(KEY_CHANGE_NICK_RESULT_OK);
-                                    server.broadcastMessage(String.format("Person %s changed nickname to %s", nick, newNick));
+                                    logger.fine("Change nickname successful");
+                                    server.broadcastMessage(String.format("Person \"%s\" changed nickname to \"%s\"", nick, newNick));
+                                    logger.info(String.format("\"%s\" changed nickname to \"%s\"", nick, newNick));
                                     nick = newNick;
                                     server.update(KEY_CLIENTS);
                                 } else {
                                     sendMessage(KEY_CHANGE_NICK_RESULT_FAILED);
+                                    logger.fine("Change nickname failed");
                                 }
                             } catch (SQLException e) {
                                 throw new RuntimeException(e);
@@ -131,7 +141,7 @@ public class ClientHandler {
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
-                    System.out.printf("Client %s disconnected\n", nick);
+                    logger.info(String.format("Client \"%s\" disconnected", nick));
 //                    try {
 //                        if (history.endsWith("\n")) {
 //                            history = history.substring(0, history.length() - 1);
@@ -154,7 +164,6 @@ public class ClientHandler {
                     }
                 }
             });
-            service.shutdown();
         } catch (IOException e) {
             e.printStackTrace();
         }

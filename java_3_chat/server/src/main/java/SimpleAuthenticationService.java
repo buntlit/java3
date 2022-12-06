@@ -1,6 +1,5 @@
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.logging.Logger;
 
 public class SimpleAuthenticationService implements AuthenticationService {
 
@@ -9,10 +8,10 @@ public class SimpleAuthenticationService implements AuthenticationService {
     private static PreparedStatement preparedStatement;
 
 
-    public SimpleAuthenticationService() {
+    public SimpleAuthenticationService(Logger logger) {
         try {
             connectToData();
-            System.out.println("Connect to db");
+            logger.info("Connect to db");
 //            for (int i = 1; i <= 10; i++) {
 //                statement.executeUpdate("INSERT INTO users (login, password, nickname, history) VALUES ('l" + i + "', 'p" + i + "', 'nick" + i + "', '');");
 //            }
